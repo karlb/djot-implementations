@@ -2,8 +2,6 @@ name: Run Benchmarks
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "13 0 1 * *"
 
 permissions:
       actions: read # An explanation.
