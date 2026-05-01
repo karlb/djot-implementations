@@ -1,0 +1,64 @@
+## File format: every non-blank line that doesn't start with `##` is a djot
+## input line, fed verbatim to each implementation.
+
+## Central question (replace, not remove)
+# Emphasis/strong
+# A+B=C
+# foo.bar.baz
+# C++ vs Rust
+# foo!bar
+
+## Maximal run collapsing
+# foo...bar
+# foo!?!bar
+# multiple   spaces
+# mixed - punctuation - run
+
+## Preserved characters (`_` and `-`)
+# foo_bar
+# snake_case_thing
+# foo-bar
+# foo--bar
+# foo - bar
+
+## Leading/trailing trim
+# !leading
+# trailing?
+# (parens) and [brackets]
+# /both sides/
+
+## Empty after stripping (fallback to suffix)
+# ...
+# !!!
+# ---
+
+## Apostrophes (settled by implication)
+# That's all
+# That's all
+# Thatʼs all
+# O'Brien
+# It's "quoted"
+
+## Question mark (djot.js vs djoths divergence)
+# foo?bar
+# Why? How?
+
+## Symbols treated as punctuation
+# 100% sure
+# $100 deal
+# a & b
+# pipe | character
+# foo<bar>baz
+# x=y+z
+
+## Non-ASCII preserved
+# Café & résumé
+# 日本語 heading
+# em—dash and en–dash
+# Π = πr²
+
+## Realistic prose
+# Don't repeat yourself
+# How-to: Set up Git
+# Section 1.2.3
+# What's new in v2.0?

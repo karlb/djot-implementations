@@ -1,0 +1,54 @@
+# scenario: Heading ID building — 42 cases × 6 impls
+
+input                        Rust                       JavaScript                 Go                     Lua                        PHP                    Haskell                    agree  consensus
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Emphasis/strong            *Emphasisstrong             Emphasis-strong            Emphasis-strong       *Emphasisstrong             Emphasis-strong        Emphasis-strong           4/6  Emphasis-strong
+# A+B=C                      *ABC                        A-B-C                      A-B-C                 *ABC                        A-B-C                  A-B-C                     4/6  A-B-C
+# foo.bar.baz                *foobarbaz                  foo-bar-baz                foo-bar-baz           *foobarbaz                  foo-bar-baz            foo-bar-baz               4/6  foo-bar-baz
+# C++ vs Rust                 C-vs-Rust                  C-vs-Rust                  C-vs-Rust              C-vs-Rust                  C-vs-Rust              C-vs-Rust                 6/6  C-vs-Rust
+# foo!bar                    *foobar                     foo-bar                    foo-bar               *foobar                     foo-bar                foo-bar                   4/6  foo-bar
+# foo...bar                  *foobar                     foo-bar                    foo-bar               *foobar                     foo-bar               *foo…bar                   3/6  foo-bar
+# foo!?!bar                  *foobar                     foo-bar                    foo-bar               *foobar                     foo-bar               *foo-?-bar                 3/6  foo-bar
+# multiple   spaces           multiple-spaces            multiple-spaces            multiple-spaces        multiple-spaces            multiple-spaces        multiple-spaces           6/6  multiple-spaces
+# mixed - punctuation - run   mixed---punctuation---run   mixed---punctuation---run  *mixed-punctuation-run   mixed---punctuation---run  *mixed-punctuation-run   mixed---punctuation---run  4/6  mixed---punctuation---run
+# foo_bar                     foo_bar                    foo_bar                   *foo-bar                foo_bar                    foo_bar                foo_bar                   5/6  foo_bar
+# snake_case_thing            snakecasething             snakecasething             snakecasething         snakecasething             snakecasething         snakecasething            6/6  snakecasething
+# foo-bar                     foo-bar                    foo-bar                    foo-bar                foo-bar                    foo-bar                foo-bar                   6/6  foo-bar
+# foo--bar                   *foobar                     foo--bar                  *foo-bar                foo--bar                  *foo-bar               *foo–bar                   2/6  foo--bar
+# foo - bar                   foo---bar                  foo---bar                 *foo-bar                foo---bar                 *foo-bar                foo---bar                 4/6  foo---bar
+# !leading                    leading                    leading                   *-leading               leading                    leading                leading                   5/6  leading
+# trailing?                   trailing                   trailing                   trailing               trailing                   trailing              *trailing?                 5/6  trailing
+# (parens) and [brackets]     parens-and-brackets        parens-and-brackets       *-parens-and-brackets   parens-and-brackets        parens-and-brackets    parens-and-brackets       5/6  parens-and-brackets
+# /both sides/                both-sides                 both-sides                *-both-sides            both-sides                 both-sides             both-sides                5/6  both-sides
+# ...                         s-1                        s-1                       *                       s-1                       *heading               *…                         3/6  s-1
+# !!!                         s-1                        s-1                       *                       s-1                       *heading               *sec                       3/6  s-1
+# ---                        *s-1                        ---                       *                       ---                       *heading               *—                         2/6  ---
+# That's all                 *Thats-all                  That's-all                *That-s-all             That's-all                *That-s-all            *That’s-all                2/6  That's-all
+# That's all                 *Thats-all                  That's-all                *That-s-all             That's-all                *That-s-all            *That’s-all                2/6  That's-all
+# Thatʼs all                  Thatʼs-all                 Thatʼs-all                 Thatʼs-all             Thatʼs-all                 Thatʼs-all             Thatʼs-all                6/6  Thatʼs-all
+# O'Brien                    *OBrien                     O'Brien                   *O-Brien                O'Brien                   *O-Brien               *O’Brien                   2/6  O'Brien
+# It's "quoted"              *Its-quoted                 It's-quoted               *It-s-quoted            It's-quoted               *It-s-quoted           *It’s-quoted             2/6  It's-quoted
+# foo?bar                    *foobar                     foo-bar                    foo-bar               *foobar                     foo-bar               *foo?bar                   3/6  foo-bar
+# Why? How?                   Why-How                    Why-How                    Why-How                Why-How                    Why-How               *Why?-How?                 5/6  Why-How
+# 100% sure                   100-sure                   100-sure                   100-sure              *100%-sure                 *h-100-sure             100-sure                  4/6  100-sure
+# $100 deal                   100-deal                   100-deal                  *-100-deal              100-deal                  *h-100-deal             100-deal                  4/6  100-deal
+# a & b                       a-b                        a-b                        a-b                    a-b                        a-b                    a-b                       6/6  a-b
+# pipe | character            pipe-character             pipe-character             pipe-character         pipe-character             pipe-character         pipe-character            6/6  pipe-character
+# foo<bar>baz                 foobarbaz                 *foo-bar-baz                foobarbaz              foobarbaz                 *foo-bar-baz           *foo-bar-baz               3/6  foobarbaz
+# x=y+z                      *xyz                        x-y-z                      x-y-z                 *xyz                        x-y-z                  x-y-z                     4/6  x-y-z
+# Café & résumé               Café-résumé                Café-résumé                Café-résumé            Café-résumé                Café-résumé            Café-résumé               6/6  Café-résumé
+# 日本語 heading                 日本語-heading                日本語-heading                日本語-heading            日本語-heading                日本語-heading            日本語-heading               6/6  日本語-heading
+# em—dash and en–dash         em—dash-and-en–dash        em—dash-and-en–dash       *em-dash-and-en-dash    em—dash-and-en–dash       *em-dash-and-en-dash    em—dash-and-en–dash       4/6  em—dash-and-en–dash
+# Π = πr²                     Π-πr²                      Π-πr²                     *Π-πr                   Π-πr²                      Π-πr²                  Π-πr²                     5/6  Π-πr²
+# Don't repeat yourself      *Dont-repeat-yourself       Don't-repeat-yourself     *Don-t-repeat-yourself   Don't-repeat-yourself     *Don-t-repeat-yourself  *Don’t-repeat-yourself     2/6  Don't-repeat-yourself
+# How-to: Set up Git          How-to-Set-up-Git         *How-to:-Set-up-Git         How-to-Set-up-Git     *How-to:-Set-up-Git         How-to-Set-up-Git     *How-to:-Set-up-Git        3/6  How-to-Set-up-Git
+# Section 1.2.3              *Section-123                Section-1-2-3              Section-1-2-3         *Section-123                Section-1-2-3          Section-1-2-3             4/6  Section-1-2-3
+# What's new in v2.0?        *Whats-new-in-v20          *What's-new-in-v2-0         What-s-new-in-v2-0    *What's-new-in-v20          What-s-new-in-v2-0    *What’s-new-in-v2-0?       2/6  What-s-new-in-v2-0
+
+# per-impl divergences from consensus:
+  Rust       17/42
+  JavaScript 3/42
+  Go         18/42
+  Lua        12/42
+  PHP        15/42
+  Haskell    17/42
