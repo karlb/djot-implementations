@@ -1,0 +1,36 @@
+## Caption block (^) handling. The spec defines `^ ...` only as a table
+## caption (syntax.md:676), but implementations differ on what happens
+## when `^` appears in other positions. Each case includes unique
+## marker words (BQTEXT, CAPTEXT, FOOTTEXT) so the rendered output makes
+## clear which pieces survive.
+
+=== caption-after-table ===
+| a | b |
+|---|---|
+| 1 | 2 |
+^ CAPTEXT for table
+
+=== caption-orphan ===
+^ CAPTEXT alone
+
+=== caption-after-paragraph ===
+PARATEXT body.
+
+^ CAPTEXT after paragraph
+
+=== caption-after-blockquote ===
+> BQTEXT
+^ CAPTEXT after blockquote
+
+=== caption-eats-footnote ===
+> BQTEXT
+^ CAPTEXT see [^1].
+
+[^1]: FOOTTEXT body.
+
+=== caption-before-table ===
+^ CAPTEXT before table
+
+| a | b |
+|---|---|
+| 1 | 2 |

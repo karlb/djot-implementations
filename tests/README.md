@@ -7,15 +7,35 @@ implementation, extracts a comparison key from each HTML output, and
 ## Layout
 
 - `run.py` — the harness. `python3 tests/run.py <scenario>`
-- `cases/<name>.txt` — one test scenario per file. Lines starting with `##`
-  are comments; everything else is fed verbatim to the implementations.
+- `cases/<name>.txt` — one test scenario per file.
 - `results/<name>.txt` — last persisted run, committed for diff visibility.
+
+## Case file formats
+
+**`lines`** (one input per line):
+
+    ## comment
+    # heading one
+    # heading two
+
+**`blocks`** (multi-line cases, separated by `=== name ===`):
+
+    ## comment
+    === case-name ===
+    multi-line
+    djot input
+
+    === another case ===
+    > more djot
+
+In both formats, lines starting with `##` are comments.
 
 ## Adding a scenario
 
 Drop a cases file under `cases/`, then register it in `SCENARIOS` in
-`run.py` with an `extract` function that pulls the comparison key out of
-the HTML output. Each scenario shares the same `IMPLS` list.
+`run.py` with `format` (`lines` or `blocks`), `display` (`table` or
+`detail`), and an `extract` function that pulls the comparison key
+out of the HTML output. Each scenario shares the same `IMPLS` list.
 
 ## Implementations
 

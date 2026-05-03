@@ -41,15 +41,24 @@ class Impl:
     def run(self, src: str) -> str:
         argv = self.resolve()
         if argv is None:
-            return "<MISSING>"
+            return ERR_MISSING
         try:
             r = subprocess.run(
                 argv, input=src, capture_output=True,
                 text=True, timeout=15,
             )
-            return r.stdout if r.returncode == 0 else f"<ERR:{r.returncode}>{r.stderr.strip()}"
+            return r.stdout if r.returncode == 0 else f"{ERR_PREFIX}exit{r.returncode}:{r.stderr.strip()}"
         except subprocess.TimeoutExpired:
-            return "<TIMEOUT>"
+            return ERR_TIMEOUT
+
+
+ERR_PREFIX = "!!ERR:"
+ERR_MISSING = ERR_PREFIX + "missing"
+ERR_TIMEOUT = ERR_PREFIX + "timeout"
+
+
+def is_error(value: str) -> bool:
+    return value.startswith(ERR_PREFIX)
 
 
 def _npm_djot_paths() -> list[list[str]]:
@@ -80,10 +89,17 @@ IMPLS = [
 
 def extract_section_id(html: str) -> str:
     """Pull the id attribute off the first <section> or <h1>..<h6>."""
-    if html.startswith("<ERR") or html in ("<TIMEOUT>", "<MISSING>"):
+    if is_error(html):
         return html
     m = re.search(r'<(?:section|h[1-6])\b[^>]*\bid="([^"]*)"', html)
-    return m.group(1) if m else "<NO-ID>"
+    return m.group(1) if m else f"{ERR_PREFIX}no-id"
+
+
+def extract_normalized_html(html: str) -> str:
+    """Whitespace-normalised HTML, suitable for byte-equality voting."""
+    if is_error(html):
+        return html
+    return re.sub(r"\s+", " ", html).strip()
 
 
 # --- Scenarios -----------------------------------------------------------
@@ -91,37 +107,103 @@ def extract_section_id(html: str) -> str:
 SCENARIOS = {
     "ids": {
         "cases": "tests/cases/ids.txt",
+        "format": "lines",
+        "display": "table",
         "extract": extract_section_id,
         "title": "Heading ID building",
+    },
+    "captions": {
+        "cases": "tests/cases/captions.txt",
+        "format": "blocks",
+        "display": "detail",
+        "extract": extract_normalized_html,
+        "title": "Caption block (^) handling",
     },
 }
 
 
-def load_cases(path: Path) -> list[str]:
-    out = []
-    for line in path.read_text().splitlines():
-        if not line.strip() or line.startswith("##"):
-            continue
-        out.append(line)
-    return out
+def load_cases(path: Path, fmt: str) -> list[tuple[str, str]]:
+    """Return [(name, source)] for the given case file."""
+    text = path.read_text()
+    if fmt == "lines":
+        out = []
+        for line in text.splitlines():
+            if not line.strip() or line.startswith("##"):
+                continue
+            out.append((line, line))
+        return out
+    if fmt == "blocks":
+        cases: list[tuple[str, str]] = []
+        name: str | None = None
+        body: list[str] = []
+        for line in text.splitlines():
+            m = re.match(r"^=== (.+?) ===\s*$", line)
+            if m:
+                if name is not None:
+                    cases.append((name, "\n".join(body).rstrip("\n")))
+                name = m.group(1).strip()
+                body = []
+            elif name is not None:
+                body.append(line)
+        if name is not None:
+            cases.append((name, "\n".join(body).rstrip("\n")))
+        return cases
+    raise ValueError(f"unknown format: {fmt}")
 
 
 def vote(results: dict[str, str]) -> tuple[str, int]:
     """Most common (non-error) value wins. Returns (winner, count)."""
     counts = collections.Counter(
-        v for v in results.values()
-        if not v.startswith("<")
+        v for v in results.values() if not is_error(v)
     )
     if not counts:
-        return ("<no consensus>", 0)
+        return (f"{ERR_PREFIX}no-consensus", 0)
     winner, n = counts.most_common(1)[0]
     return (winner, n)
+
+
+def display_table(grid, impls):
+    col_w = {
+        i.name: max(len(i.name), max(len(r[i.name]) for _, _, r, *_ in grid))
+        for i in impls
+    }
+    name_col_w = max(len("input"), max(len(n) for n, *_ in grid))
+    parts = [f"{'input':<{name_col_w}}"]
+    parts += [f"{i.name:<{col_w[i.name]}}" for i in impls]
+    parts += ["agree", "consensus"]
+    header = "  ".join(parts)
+    print(header)
+    print("-" * len(header))
+    for name, _src, results, winner, n in grid:
+        row = [f"{name:<{name_col_w}}"]
+        for i in impls:
+            v = results[i.name]
+            mark = " " if v == winner else "*"
+            row.append(f"{mark}{v:<{col_w[i.name]-1}}")
+        row.append(f"{n}/{len(impls)}")
+        row.append(winner)
+        print("  ".join(row))
+
+
+def display_detail(grid, impls):
+    name_w = max(len(i.name) for i in impls)
+    for name, src, results, winner, n in grid:
+        print(f"=== {name} === (consensus {n}/{len(impls)})")
+        print("input:")
+        for line in src.splitlines() or [""]:
+            print(f"    {line}")
+        print("output:")
+        for i in impls:
+            v = results[i.name]
+            mark = " " if v == winner else "*"
+            print(f"  {mark} {i.name:<{name_w}}  {v}")
+        print()
 
 
 def main() -> int:
     scenario = sys.argv[1] if len(sys.argv) > 1 else "ids"
     cfg = SCENARIOS[scenario]
-    cases = load_cases(ROOT / cfg["cases"])
+    cases = load_cases(ROOT / cfg["cases"], cfg.get("format", "lines"))
     extract = cfg["extract"]
 
     impls = [i for i in IMPLS if i.available()]
@@ -131,39 +213,22 @@ def main() -> int:
     print(f"# scenario: {cfg['title']} — {len(cases)} cases × {len(impls)} impls\n")
 
     # Run all cases × impls.
-    grid: list[tuple[str, dict[str, str], str, int]] = []
-    for src in cases:
+    grid: list[tuple[str, str, dict[str, str], str, int]] = []
+    for name, src in cases:
         per_impl = {i.name: extract(i.run(src + "\n")) for i in impls}
         winner, n = vote(per_impl)
-        grid.append((src, per_impl, winner, n))
+        grid.append((name, src, per_impl, winner, n))
 
-    # Tabulate. Each impl column is sized to its widest value.
-    col_w = {
-        i.name: max(len(i.name), max(len(r[i.name]) for _, r, *_ in grid))
-        for i in impls
-    }
-    src_w = max(len("input"), max(len(s) for s, *_ in grid))
-    parts = [f"{'input':<{src_w}}"]
-    parts += [f"{i.name:<{col_w[i.name]}}" for i in impls]
-    parts += ["agree", "consensus"]
-    header = "  ".join(parts)
-    print(header)
-    print("-" * len(header))
-    for src, results, winner, n in grid:
-        row = [f"{src:<{src_w}}"]
-        for i in impls:
-            v = results[i.name]
-            mark = " " if v == winner else "*"
-            row.append(f"{mark}{v:<{col_w[i.name]-1}}")
-        row.append(f"{n}/{len(impls)}")
-        row.append(winner)
-        print("  ".join(row))
+    if cfg.get("display", "table") == "detail":
+        display_detail(grid, impls)
+    else:
+        display_table(grid, impls)
 
     # Per-impl divergence summary.
-    print("\n# per-impl divergences from consensus:")
+    print("# per-impl divergences from consensus:")
     name_w = max(len(i.name) for i in impls)
     for i in impls:
-        diffs = sum(1 for _, r, w, _ in grid if r[i.name] != w)
+        diffs = sum(1 for _, _, r, w, _ in grid if r[i.name] != w)
         print(f"  {i.name:<{name_w}} {diffs}/{len(grid)}")
 
     return 0

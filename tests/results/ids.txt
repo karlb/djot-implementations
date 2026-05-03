@@ -44,7 +44,6 @@ input                        Rust                       JavaScript              
 # How-to: Set up Git          How-to-Set-up-Git         *How-to:-Set-up-Git         How-to-Set-up-Git     *How-to:-Set-up-Git         How-to-Set-up-Git     *How-to:-Set-up-Git        3/6  How-to-Set-up-Git
 # Section 1.2.3              *Section-123                Section-1-2-3              Section-1-2-3         *Section-123                Section-1-2-3          Section-1-2-3             4/6  Section-1-2-3
 # What's new in v2.0?        *Whats-new-in-v20          *What's-new-in-v2-0         What-s-new-in-v2-0    *What's-new-in-v20          What-s-new-in-v2-0    *What’s-new-in-v2-0?       2/6  What-s-new-in-v2-0
-
 # per-impl divergences from consensus:
   Rust       17/42
   JavaScript 3/42
